@@ -1,0 +1,222 @@
+:root {
+  /* Velvet Dark Theme */
+  --bg-main: #101014;
+  --bg-card: #18181C;
+  --bg-elevated: #232336;
+  --glass-dark: rgba(24, 24, 28, 0.75);
+  --glass-light: rgba(255, 255, 255, 0.08);
+  --glass-accent: rgba(120, 119, 198, 0.18);
+  --blur: blur(18px);
+  /* Text */
+  --text-primary: #F5F6FA;
+  --text-secondary: #B6B8C3;
+  /* Premium Gradients */
+  --brand-gradient: linear-gradient(135deg, #6D5FFD 0%, #3B82F6 50%, #14F195 100%);
+  --hero-gradient: linear-gradient(135deg, #101014 0%, #18181C 50%, #232336 100%);
+  --card-gradient: linear-gradient(145deg, #18181C 0%, #232336 100%);
+  --button-gradient: linear-gradient(135deg, #6D5FFD 0%, #3B82F6 100%);
+  --accent-gradient: linear-gradient(90deg, #A855F7 0%, #14F195 100%);
+  --success-gradient: linear-gradient(135deg, #059669 0%, #10B981 100%);
+  /* Accents */
+  --blue: #3B82F6;
+  --blue-dark: #1E40AF;
+  --purple: #6D5FFD;
+  --mint: #14F195;
+  --crimson: #EF4444;
+  --yellow: #FBBF24;
+  --shadow-soft: 0 4px 16px rgba(36, 36, 54, 0.35);
+  --shadow-medium: 0 8px 32px rgba(36, 36, 54, 0.45);
+  --shadow-deep: 0 16px 64px rgba(36, 36, 54, 0.55);
+  --shadow-colored: 0 8px 32px rgba(109, 95, 253, 0.18);
+  --radius: 18px;
+  --radius-lg: 32px;
+  --font-main: 'SF Pro Display', 'Inter', 'San Francisco', 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+  background: var(--bg-main);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 1.08rem;
+  letter-spacing: 0.01em;
+  min-height: 100vh;
+}
+
+.apple-navbar {
+  background: var(--glass-dark);
+  backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--bg-elevated);
+  box-shadow: var(--shadow-soft);
+}
+
+.navbar-brand {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  font-size: 2rem;
+  letter-spacing: 1px;
+}
+
+.nav-link {
+  color: var(--text-secondary) !important;
+  font-weight: 500;
+  transition: color 0.2s, background 0.2s;
+  border-radius: var(--radius);
+  padding: 0.5rem 1.2rem;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: var(--mint) !important;
+  background: var(--glass-light);
+}
+
+.btn-primary {
+  background: var(--button-gradient) !important;
+  border: none;
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-colored);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  padding: 0.75rem 2.5rem;
+  font-size: 1.15rem;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  filter: brightness(1.08);
+  transform: scale(1.03);
+  box-shadow: var(--shadow-medium);
+}
+
+.btn-outline-primary {
+  color: var(--mint) !important;
+  border: 2px solid var(--mint) !important;
+  background: transparent !important;
+  border-radius: var(--radius-lg);
+  transition: background 0.2s, color 0.2s, transform 0.1s;
+}
+.btn-outline-primary:hover {
+  background: var(--mint) !important;
+  color: var(--bg-main) !important;
+  transform: scale(1.03);
+}
+
+.card {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  border: none;
+  background: var(--card-gradient);
+  color: var(--text-primary);
+  transition: box-shadow 0.2s, transform 0.1s;
+}
+.card:hover {
+  box-shadow: var(--shadow-medium);
+  transform: translateY(-2px) scale(1.01);
+}
+
+input, textarea, select {
+  border-radius: var(--radius) !important;
+  border: 1.5px solid var(--bg-elevated) !important;
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+  font-size: 1rem;
+  transition: border 0.2s, box-shadow 0.2s;
+  padding: 0.75rem 1.2rem;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--mint) !important;
+  box-shadow: 0 0 0 2px var(--purple);
+}
+
+.apple-footer {
+  background: var(--glass-dark);
+  border-top: 1px solid var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: var(--blur);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-elevated);
+  border-radius: 8px;
+}
+
+.section-apple {
+  background: var(--glass-dark);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 3rem 2rem;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+  backdrop-filter: var(--blur);
+  border: 1.5px solid var(--glass-accent);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-main);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.text-muted {
+  color: var(--text-secondary) !important;
+  opacity: 0.7;
+}
+
+.badge.bg-primary {
+  background: var(--accent-gradient) !important;
+  color: #fff !important;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: var(--radius);
+  padding: 0.5em 1.2em;
+}
+
+.fade-in {
+  animation: fadeIn 0.7s cubic-bezier(.4,0,.2,1);
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Glassmorphism Card */
+.glass-card {
+  background: var(--glass-dark);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  border: 1.5px solid var(--glass-accent);
+  backdrop-filter: var(--blur);
+  color: var(--text-primary);
+}
+
+/* Cricket Themed */
+.cricket-ball {
+  width: 32px; height: 32px; border-radius: 50%; background: var(--brand-gradient); box-shadow: 0 0 16px var(--blue), 0 0 32px var(--purple); display: inline-block; position: relative;
+}
+.cricket-bat {
+  width: 36px; height: 10px; background: var(--mint); border-radius: 6px; display: inline-block; position: relative; margin-left: 8px;
+}
+
+/* Micro-interactions */
+.btn, .card, .input, .form-control {
+  transition: box-shadow 0.2s, transform 0.1s, background 0.2s, color 0.2s;
+}
+.btn:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-deep);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .section-apple { padding: 2rem 0.5rem; }
+  .card { padding: 1.2rem 0.5rem; }
+  .navbar-brand { font-size: 1.3rem; }
+} 

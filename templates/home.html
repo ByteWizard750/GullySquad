@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}GullySquad – Play Cricket, Anytime{% endblock %}
+
+{% block content %}
+<header class="section-apple fade-in text-center mb-5" style="background: var(--hero-gradient); position: relative; overflow: hidden;">
+    <div style="position: absolute; top: -40px; left: -40px; width: 180px; height: 180px; background: var(--accent-gradient); opacity: 0.12; border-radius: 50%; filter: blur(32px);"></div>
+    <div style="position: absolute; bottom: -40px; right: -40px; width: 180px; height: 180px; background: var(--brand-gradient); opacity: 0.10; border-radius: 50%; filter: blur(32px);"></div>
+    <h1 class="display-3 fw-bold mb-3" style="background: var(--brand-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Welcome to GullySquad</h1>
+    <p class="lead text-muted mb-4" style="font-size:1.3rem;">The premium platform for cricket lovers to play, connect, and shine.</p>
+    <a href="/matches/" class="btn btn-primary btn-lg shadow-lg px-5 py-3" style="font-size:1.2rem;">Find Matches</a>
+</header>
+
+<section class="container fade-in maxw" style="margin-top: 3rem;">
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-4">
+            <div class="card p-4 h-100 text-center border-0 glass-card" style="border: 1.5px solid var(--glass-accent);">
+                <div class="mb-3"><i class="fas fa-calendar-plus fa-2x" style="color:var(--crimson-light);"></i></div>
+                <h5 class="fw-bold mb-2">Host Matches</h5>
+                <p class="text-muted">Create and host cricket matches in your area. Set the date, time, and location with ease.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 h-100 text-center border-0 glass-card" style="border: 1.5px solid var(--glass-accent);">
+                <div class="mb-3"><i class="fas fa-users fa-2x" style="color:var(--mint);"></i></div>
+                <h5 class="fw-bold mb-2">Join Teams</h5>
+                <p class="text-muted">Find and join teams looking for players. Connect with other cricket lovers in a beautiful interface.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 h-100 text-center border-0 glass-card" style="border: 1.5px solid var(--glass-accent);">
+                <div class="mb-3"><i class="fas fa-user-friends fa-2x" style="color:var(--purple-light);"></i></div>
+                <h5 class="fw-bold mb-2">Build Squads</h5>
+                <p class="text-muted">Create your own squad, invite players, and manage your team with a premium, modern dashboard.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="container fade-in maxw" style="margin-top: 4rem;">
+    <h2 class="text-center mb-4" style="font-weight:700; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Upcoming Matches</h2>
+    <div id="matches-list" class="row g-4 justify-content-center">
+        {% if upcoming_matches %}
+            {% for match in upcoming_matches %}
+            <div class="col-md-4">
+                <div class="card p-4 text-center border-0 glass-card" style="border: 1.5px solid var(--glass-accent);">
+                    <h6 class="fw-bold mb-1">{{ match.title }}</h6>
+                    <p class="text-muted mb-2">{{ match.location }}, {{ match.date|date:'M d' }} {{ match.time|time:'H:i' }}</p>
+                    <span class="badge bg-primary mb-2">{{ match.status|title }}</span>
+                    <div class="mb-2 text-secondary" style="font-size:0.95rem;">Players: {{ match.current_players }}/{{ match.max_players }}</div>
+                    <a href="/matches/{{ match.id }}/" class="btn btn-outline-primary btn-sm mt-2">View Details</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center">
+                <p class="lead text-muted">No upcoming matches found.</p>
+                <a href="/matches/create/" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Host a Match
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-apple fade-in text-center" style="margin-top: 4rem; background: var(--card-gradient); box-shadow: var(--shadow-medium);">
+    <h3 class="fw-bold mb-3" style="background: var(--success-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Ready to Play?</h3>
+    <p class="lead" style="color:var(--text-secondary); max-width:600px; margin:0 auto 2rem auto;">Sign up now and experience the most beautiful way to play, connect, and win in your local cricket community.</p>
+    <a href="/register/" class="btn btn-primary btn-lg px-5 py-3 shadow" style="font-size:1.2rem;">Get Started</a>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<!-- No JS needed for dynamic matches -->
+{% endblock %} 

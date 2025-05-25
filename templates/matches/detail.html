@@ -1,0 +1,323 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ match.title }} - GullySquad{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Match Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/matches/" class="text-decoration-none">Matches</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ match.title }}</li>
+                </ol>
+            </nav>
+            <h1 class="mb-3">{{ match.title }}</h1>
+            <div class="d-flex align-items-center mb-3">
+                <span class="badge bg-primary me-2">
+                    <i class="fas fa-users me-1"></i>{{ match.current_players }}/{{ match.max_players }} Players
+                </span>
+                <span class="badge {% if match.status == 'open' %}bg-success{% elif match.status == 'full' %}bg-warning{% elif match.status == 'in_progress' %}bg-info{% else %}bg-secondary{% endif %}">
+                    {{ match.status|title }}
+                </span>
+            </div>
+        </div>
+        <div class="col-md-4 text-md-end">
+            {% if user.is_authenticated %}
+                {% if user in match.participants.all %}
+                    <button class="btn btn-danger btn-lg" id="leave-match">
+                        <i class="fas fa-sign-out-alt me-2"></i>Leave Match
+                    </button>
+                {% elif match.status == 'open' and match.current_players < match.max_players %}
+                    <button class="btn btn-success btn-lg" id="join-match">
+                        <i class="fas fa-user-plus me-2"></i>Join Match
+                    </button>
+                {% endif %}
+            {% else %}
+                <a href="/login/?next={{ request.path }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login to Join
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Match Details -->
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0 rounded-lg mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-info-circle me-2"></i>Match Details
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-3">
+                                <i class="fas fa-calendar me-2"></i>
+                                <strong>Date:</strong><br>
+                                {{ match.date|date:"l, F j, Y" }}
+                            </p>
+                            <p class="mb-3">
+                                <i class="fas fa-clock me-2"></i>
+                                <strong>Time:</strong><br>
+                                {{ match.time }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-3">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                <strong>Location:</strong><br>
+                                {{ match.location }}
+                            </p>
+                            <p class="mb-3">
+                                <i class="fas fa-user me-2"></i>
+                                <strong>Hosted by:</strong><br>
+                                <a href="/profile/{{ match.created_by.username }}/" class="text-decoration-none">
+                                    {{ match.created_by.get_full_name }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6 class="mb-3">Description</h6>
+                    <p class="card-text">{{ match.description|linebreaks }}</p>
+                </div>
+            </div>
+            
+            <!-- Match Chat -->
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-comments me-2"></i>Match Chat
+                    </h5>
+                    <div class="chat-messages" id="chat-messages" style="height: 400px; overflow-y: auto;">
+                        <!-- Messages will be loaded here -->
+                    </div>
+                    {% if user.is_authenticated %}
+                        <form id="chat-form" class="mt-3">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="message-input" placeholder="Type your message...">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>Please <a href="/login/?next={{ request.path }}" class="alert-link">login</a> to join the chat.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Participants -->
+        <div class="col-md-4">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-users me-2"></i>Participants
+                    </h5>
+                    <div id="participants-list">
+                        <!-- Participants will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // WebSocket connection
+    const chatSocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/chat/{{ match.id }}/'
+    );
+    
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const messagesContainer = document.getElementById('chat-messages');
+        
+        const messageHtml = `
+            <div class="message mb-3">
+                <div class="d-flex align-items-start">
+                    <img src="${data.sender.profile_picture || '/static/images/default-profile.png'}" 
+                         alt="${data.sender.username}" 
+                         class="rounded-circle me-2"
+                         style="width: 40px; height: 40px; object-fit: cover;">
+                    <div class="message-content">
+                        <div class="d-flex align-items-center mb-1">
+                            <strong class="me-2">${data.sender.username}</strong>
+                            <small class="text-muted">${new Date(data.timestamp).toLocaleTimeString()}</small>
+                        </div>
+                        <p class="mb-0">${data.content}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        messagesContainer.innerHTML += messageHtml;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    };
+    
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+    
+    // Send message
+    document.getElementById('chat-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const messageInput = document.getElementById('message-input');
+        const message = messageInput.value.trim();
+        
+        if (message) {
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+            messageInput.value = '';
+        }
+    });
+    
+    // Join/Leave match
+    document.getElementById('join-match')?.addEventListener('click', function() {
+        fetch(`/api/matches/${matchId}/join/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.message || 'Error joining match');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error joining match');
+        });
+    });
+    
+    document.getElementById('leave-match')?.addEventListener('click', function() {
+        if (confirm('Are you sure you want to leave this match?')) {
+            fetch(`/api/matches/${matchId}/leave/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Error leaving match');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error leaving match');
+            });
+        }
+    });
+    
+    // Load participants
+    function loadParticipants() {
+        fetch(`/api/matches/${matchId}/participants/`)
+            .then(response => response.json())
+            .then(participants => {
+                const participantsContainer = document.getElementById('participants-list');
+                participantsContainer.innerHTML = '';
+                
+                participants.forEach(participant => {
+                    participantsContainer.innerHTML += `
+                        <div class="participant mb-3">
+                            <div class="d-flex align-items-center">
+                                <img src="${participant.profile_picture || '/static/images/default-profile.png'}" 
+                                     alt="${participant.username}" 
+                                     class="rounded-circle me-2"
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                <div>
+                                    <a href="/profile/${participant.username}/" class="text-decoration-none">
+                                        ${participant.full_name}
+                                    </a>
+                                    <small class="d-block text-muted">@${participant.username}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            })
+            .catch(error => {
+                console.error('Error loading participants:', error);
+                document.getElementById('participants-list').innerHTML = `
+                    <p class="text-danger">Error loading participants</p>
+                `;
+            });
+    }
+    
+    // Load chat history
+    function loadChatHistory() {
+        fetch(`/api/matches/${matchId}/messages/`)
+            .then(response => response.json())
+            .then(messages => {
+                const messagesContainer = document.getElementById('chat-messages');
+                messagesContainer.innerHTML = '';
+                
+                messages.forEach(message => {
+                    const messageHtml = `
+                        <div class="message mb-3">
+                            <div class="d-flex align-items-start">
+                                <img src="${message.sender.profile_picture || '/static/images/default-profile.png'}" 
+                                     alt="${message.sender.username}" 
+                                     class="rounded-circle me-2"
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                <div class="message-content">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <strong class="me-2">${message.sender.username}</strong>
+                                        <small class="text-muted">${new Date(message.timestamp).toLocaleTimeString()}</small>
+                                    </div>
+                                    <p class="mb-0">${message.content}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    messagesContainer.innerHTML += messageHtml;
+                });
+                
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error loading chat history:', error);
+                document.getElementById('chat-messages').innerHTML = `
+                    <p class="text-danger">Error loading chat history</p>
+                `;
+            });
+    }
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Initial load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadParticipants();
+        loadChatHistory();
+    });
+</script>
+{% endblock %} 

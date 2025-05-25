@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block title %}Squads - GullySquad{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-4 mb-3" style="background: var(--brand-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Squads</h1>
+            <p class="lead text-muted">Find or create your cricket squad</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'squad-create' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus-circle me-2"></i>Create Squad
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form id="searchForm" class="row g-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="search" placeholder="Search squads...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="sortBy">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="name">Name (A-Z)</option>
+                                <option value="members">Most Members</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterBy">
+                                <option value="all">All Squads</option>
+                                <option value="my_squads">My Squads</option>
+                                <option value="available">Available to Join</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-2"></i>Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" id="squadsList">
+        {% if squads %}
+            {% for squad in squads %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">{{ squad.name }}</h5>
+                            <p class="card-text text-muted">{{ squad.description }}</p>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-users me-1"></i>{{ squad.squadmember_set.count }} Members
+                                </span>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>{{ squad.created_at|date:'M d, Y' }}
+                                </small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="/squads/{{ squad.id }}/" class="btn btn-outline-primary">
+                                    <i class="fas fa-eye me-2"></i>View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h4>No squads found</h4>
+                <p class="text-muted">Try adjusting your search criteria</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <button id="loadMore" class="btn btn-outline-primary" style="display: none;">
+                <i class="fas fa-sync-alt me-2"></i>Load More
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let page = 1;
+    let loading = false;
+    let hasMore = true;
+
+    function createSquadCard(squad) {
+        return `
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm hover-shadow">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">${squad.name}</h5>
+                        <p class="card-text text-muted">${squad.description}</p>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-primary">
+                                <i class="fas fa-users me-1"></i>${squad.members.length} Members
+                            </span>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>${new Date(squad.created_at).toLocaleDateString()}
+                            </small>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="/squads/${squad.id}/" class="btn btn-outline-primary">
+                                <i class="fas fa-eye me-2"></i>View Details
+                            </a>
+                            ${squad.can_join ? `
+                                <button class="btn btn-success join-squad" data-squad-id="${squad.id}">
+                                    <i class="fas fa-user-plus me-2"></i>Join
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function loadSquads(reset = false) {
+        if (loading || !hasMore) return;
+        
+        loading = true;
+        if (reset) {
+            page = 1;
+            document.getElementById('squadsList').innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        const search = document.getElementById('search').value;
+        const sortBy = document.getElementById('sortBy').value;
+        const filterBy = document.getElementById('filterBy').value;
+
+        try {
+            const response = await fetch(`/api/squads/?page=${page}&search=${search}&sort=${sortBy}&filter=${filterBy}`);
+            const data = await response.json();
+
+            if (reset) {
+                document.getElementById('squadsList').innerHTML = '';
+            }
+
+            if (data.results.length === 0) {
+                if (page === 1) {
+                    document.getElementById('squadsList').innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h4>No squads found</h4>
+                            <p class="text-muted">Try adjusting your search criteria</p>
+                        </div>
+                    `;
+                }
+                hasMore = false;
+                document.getElementById('loadMore').style.display = 'none';
+            } else {
+                data.results.forEach(squad => {
+                    document.getElementById('squadsList').insertAdjacentHTML('beforeend', createSquadCard(squad));
+                });
+                hasMore = data.next !== null;
+                document.getElementById('loadMore').style.display = hasMore ? 'inline-block' : 'none';
+            }
+        } catch (error) {
+            console.error('Error loading squads:', error);
+            document.getElementById('squadsList').innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                    <h4>Error loading squads</h4>
+                    <p class="text-muted">Please try again later</p>
+                </div>
+            `;
+        }
+
+        loading = false;
+    }
+
+    // Event Listeners
+    document.getElementById('searchForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        loadSquads(true);
+    });
+
+    document.getElementById('loadMore').addEventListener('click', () => {
+        page++;
+        loadSquads();
+    });
+
+    document.getElementById('squadsList').addEventListener('click', async (e) => {
+        if (e.target.classList.contains('join-squad')) {
+            const squadId = e.target.dataset.squadId;
+            try {
+                const response = await fetch(`/api/squads/${squadId}/join/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                
+                if (response.ok) {
+                    e.target.disabled = true;
+                    e.target.innerHTML = '<i class="fas fa-check me-2"></i>Joined';
+                    e.target.classList.remove('btn-success');
+                    e.target.classList.add('btn-secondary');
+                } else {
+                    throw new Error('Failed to join squad');
+                }
+            } catch (error) {
+                console.error('Error joining squad:', error);
+                alert('Failed to join squad. Please try again.');
+            }
+        }
+    });
+
+    // Initial load
+    loadSquads();
+</script>
+{% endblock %} 

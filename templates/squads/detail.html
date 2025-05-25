@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ squad.name }} - GullySquad{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'squads:list' %}">Squads</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ squad.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h1 class="h2 mb-2">{{ squad.name }}</h1>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-clock me-2"></i>Created {{ squad.created_at|date:"F j, Y" }}
+                            </p>
+                        </div>
+                        {% if user.is_authenticated %}
+                            {% if is_member %}
+                                <button class="btn btn-danger leave-squad" data-squad-id="{{ squad.id }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Leave Squad
+                                </button>
+                            {% else %}
+                                <button class="btn btn-success join-squad" data-squad-id="{{ squad.id }}">
+                                    <i class="fas fa-user-plus me-2"></i>Join Squad
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <p class="lead">{{ squad.description }}</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Members
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="membersList">
+                        {% for member in squad.members %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ member.user.profile_picture.url|default:'/static/images/default-profile.png' }}" 
+                                         alt="{{ member.user.get_full_name }}" 
+                                         class="rounded-circle me-3"
+                                         style="width: 48px; height: 48px; object-fit: cover;">
+                                    <div>
+                                        <h6 class="mb-0">{{ member.user.get_full_name }}</h6>
+                                        <small class="text-muted">
+                                            <i class="fas fa-user-tag me-1"></i>{{ member.get_role_display }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Squad Info
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="fas fa-users me-2"></i>Total Members
+                            </span>
+                            <span class="badge bg-primary rounded-pill">{{ squad.members.count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="fas fa-user me-2"></i>Created By
+                            </span>
+                            <span>{{ squad.created_by.get_full_name }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="fas fa-calendar me-2"></i>Created On
+                            </span>
+                            <span>{{ squad.created_at|date:"M d, Y" }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            {% if is_member %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-comments me-2"></i>Squad Chat
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="chatMessages" class="mb-3" style="height: 300px; overflow-y: auto;">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <form id="chatForm" class="d-flex">
+                            <input type="text" class="form-control me-2" id="messageInput" placeholder="Type a message...">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // WebSocket connection
+    const chatSocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/squads/{{ squad.id }}/'
+    );
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const messagesDiv = document.getElementById('chatMessages');
+        
+        if (data.type === 'chat_message') {
+            const messageHtml = `
+                <div class="d-flex mb-3 ${data.user_id === {{ user.id|default:"null" }} ? 'justify-content-end' : ''}">
+                    <div class="message ${data.user_id === {{ user.id|default:"null" }} ? 'bg-primary text-white' : 'bg-light'} rounded p-2" style="max-width: 75%;">
+                        <small class="d-block text-${data.user_id === {{ user.id|default:"null" }} ? 'light' : 'muted'}">
+                            ${data.username}
+                        </small>
+                        <div>${data.message}</div>
+                        <small class="d-block text-${data.user_id === {{ user.id|default:"null" }} ? 'light' : 'muted'} text-end">
+                            ${new Date(data.timestamp).toLocaleTimeString()}
+                        </small>
+                    </div>
+                </div>
+            `;
+            messagesDiv.insertAdjacentHTML('beforeend', messageHtml);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    // Chat form submission
+    document.getElementById('chatForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const messageInput = document.getElementById('messageInput');
+        const message = messageInput.value.trim();
+        
+        if (message) {
+            chatSocket.send(JSON.stringify({
+                'message': message
+            }));
+            messageInput.value = '';
+        }
+    });
+
+    // Join/Leave squad functionality
+    document.querySelector('.join-squad')?.addEventListener('click', async function() {
+        const squadId = this.dataset.squadId;
+        try {
+            const response = await fetch(`/api/squads/${squadId}/join/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('Failed to join squad');
+            }
+        } catch (error) {
+            console.error('Error joining squad:', error);
+            alert('Failed to join squad. Please try again.');
+        }
+    });
+
+    document.querySelector('.leave-squad')?.addEventListener('click', async function() {
+        if (confirm('Are you sure you want to leave this squad?')) {
+            const squadId = this.dataset.squadId;
+            try {
+                const response = await fetch(`/api/squads/${squadId}/leave/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+                
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    throw new Error('Failed to leave squad');
+                }
+            } catch (error) {
+                console.error('Error leaving squad:', error);
+                alert('Failed to leave squad. Please try again.');
+            }
+        }
+    });
+
+    // Load chat history
+    async function loadChatHistory() {
+        const messagesDiv = document.getElementById('chatMessages');
+        if (!messagesDiv) return;
+
+        try {
+            const response = await fetch(`/api/squads/{{ squad.id }}/messages/`);
+            const messages = await response.json();
+            
+            messagesDiv.innerHTML = messages.map(message => `
+                <div class="d-flex mb-3 ${message.user_id === {{ user.id|default:"null" }} ? 'justify-content-end' : ''}">
+                    <div class="message ${message.user_id === {{ user.id|default:"null" }} ? 'bg-primary text-white' : 'bg-light'} rounded p-2" style="max-width: 75%;">
+                        <small class="d-block text-${message.user_id === {{ user.id|default:"null" }} ? 'light' : 'muted'}">
+                            ${message.username}
+                        </small>
+                        <div>${message.content}</div>
+                        <small class="d-block text-${message.user_id === {{ user.id|default:"null" }} ? 'light' : 'muted'} text-end">
+                            ${new Date(message.timestamp).toLocaleTimeString()}
+                        </small>
+                    </div>
+                </div>
+            `).join('');
+            
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        } catch (error) {
+            console.error('Error loading chat history:', error);
+            messagesDiv.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-circle fa-3x text-danger mb-3"></i>
+                    <h4>Error loading messages</h4>
+                    <p class="text-muted">Please try again later</p>
+                </div>
+            `;
+        }
+    }
+
+    // Load chat history if user is a member
+    {% if is_member %}
+        loadChatHistory();
+    {% endif %}
+</script>
+{% endblock %} 

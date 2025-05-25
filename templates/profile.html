@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ user.username }}'s Profile - GullySquad{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Profile Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" class="rounded-circle img-fluid" style="width: 150px; height: 150px; object-fit: cover;">
+                        {% else %}
+                            <img src="/static/images/default-avatar.png" alt="{{ user.username }}" class="rounded-circle img-fluid" style="width: 150px; height: 150px; object-fit: cover;">
+                        {% endif %}
+                    </div>
+                    <h3 class="mb-1">{{ user.get_full_name }}</h3>
+                    <p class="text-muted mb-3">@{{ user.username }}</p>
+                    <div class="d-flex justify-content-center mb-3">
+                        <span class="badge bg-primary me-2">
+                            <i class="fas fa-user-tag me-1"></i>{{ user.role|title }}
+                        </span>
+                        <span class="badge bg-success">
+                            <i class="fas fa-star me-1"></i>{{ user.rating|default:"0.0" }}
+                        </span>
+                    </div>
+                    <div class="d-grid">
+                        <a href="/profile/edit/" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-2"></i>Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats Card -->
+            <div class="card shadow-lg border-0 rounded-lg mt-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-chart-bar me-2"></i>Stats
+                    </h5>
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <h4>{{ user.matches_played|default:"0" }}</h4>
+                            <p class="text-muted mb-0">Matches</p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h4>{{ user.squads.count|default:"0" }}</h4>
+                            <p class="text-muted mb-0">Squads</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-8">
+            <!-- About Section -->
+            <div class="card shadow-lg border-0 rounded-lg mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-info-circle me-2"></i>About
+                    </h5>
+                    <p class="card-text">{{ user.bio|default:"No bio available." }}</p>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <i class="fas fa-envelope me-2"></i>{{ user.email }}
+                            </p>
+                            <p class="mb-2">
+                                <i class="fas fa-phone me-2"></i>{{ user.phone_number|default:"Not provided" }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <i class="fas fa-map-marker-alt me-2"></i>{{ user.location|default:"Location not set" }}
+                            </p>
+                            <p class="mb-2">
+                                <i class="fas fa-calendar-alt me-2"></i>Joined {{ user.date_joined|date:"F Y" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Matches -->
+            <div class="card shadow-lg border-0 rounded-lg mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-calendar me-2"></i>Upcoming Matches
+                    </h5>
+                    <div id="upcoming-matches">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- My Squads -->
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-users me-2"></i>My Squads
+                    </h5>
+                    <div id="my-squads">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Fetch upcoming matches
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch user's upcoming matches
+        fetch('/api/matches/?participant={{ user.id }}')
+            .then(response => response.json())
+            .then(matches => {
+                const matchesContainer = document.getElementById('upcoming-matches');
+                matchesContainer.innerHTML = ''; // Clear loading spinner
+                
+                if (matches.length === 0) {
+                    matchesContainer.innerHTML = `
+                        <p class="text-center text-muted">No upcoming matches found.</p>
+                        <div class="text-center">
+                            <a href="/matches/create/" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Host a Match
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                matches.forEach(match => {
+                    const matchDate = new Date(match.date);
+                    const formattedDate = matchDate.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    
+                    matchesContainer.innerHTML += `
+                        <div class="match-card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">${match.title}</h5>
+                                <p class="card-text">
+                                    <i class="fas fa-calendar me-2"></i>${formattedDate}<br>
+                                    <i class="fas fa-clock me-2"></i>${match.time}<br>
+                                    <i class="fas fa-map-marker-alt me-2"></i>${match.location}
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-users me-1"></i>${match.current_players}/${match.max_players} Players
+                                    </span>
+                                    <a href="/matches/${match.id}/" class="btn btn-outline-primary btn-sm">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching matches:', error);
+                document.getElementById('upcoming-matches').innerHTML = `
+                    <p class="text-center text-danger">Error loading matches. Please try again later.</p>
+                `;
+            });
+            
+        // Fetch user's squads
+        fetch('/api/squads/?member={{ user.id }}')
+            .then(response => response.json())
+            .then(squads => {
+                const squadsContainer = document.getElementById('my-squads');
+                squadsContainer.innerHTML = ''; // Clear loading spinner
+                
+                if (squads.length === 0) {
+                    squadsContainer.innerHTML = `
+                        <p class="text-center text-muted">You haven't joined any squads yet.</p>
+                        <div class="text-center">
+                            <a href="/squads/create/" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create Squad
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                squads.forEach(squad => {
+                    squadsContainer.innerHTML += `
+                        <div class="squad-card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">${squad.name}</h5>
+                                <p class="card-text">${squad.description}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-users me-1"></i>${squad.members.length} Members
+                                    </span>
+                                    <a href="/squads/${squad.id}/" class="btn btn-outline-primary btn-sm">
+                                        View Squad
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching squads:', error);
+                document.getElementById('my-squads').innerHTML = `
+                    <p class="text-center text-danger">Error loading squads. Please try again later.</p>
+                `;
+            });
+    });
+</script>
+{% endblock %} 

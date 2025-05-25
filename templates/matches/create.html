@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Match - GullySquad{% endblock %}
+
+{% block content %}
+<section class="section-apple fade-in maxw" style="margin-top: 2rem; background: var(--card-gradient); box-shadow: var(--shadow-medium);">
+    <h1 class="mb-4" style="background: var(--brand-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size:2.4rem;">Create a New Match</h1>
+    <form method="post" class="needs-validation" novalidate autocomplete="off">
+        {% csrf_token %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        <div class="row g-4">
+            <div class="col-md-6">
+                <label class="form-label">Match Title</label>
+                <input type="text" class="form-control" name="title" required placeholder="e.g. Sunday Morning Gully" />
+                <div class="invalid-feedback">Please enter a match title.</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Location</label>
+                <input type="text" class="form-control" name="location" required placeholder="e.g. Central Park" />
+                <div class="invalid-feedback">Please enter a location.</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Date</label>
+                <input type="date" class="form-control" name="date" required />
+                <div class="invalid-feedback">Please select a date.</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Time</label>
+                <input type="time" class="form-control" name="time" required />
+                <div class="invalid-feedback">Please select a time.</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Max Players</label>
+                <input type="number" class="form-control" name="max_players" min="2" max="22" required placeholder="e.g. 11" />
+                <div class="invalid-feedback">Please enter a valid number of players.</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" name="description" rows="3" placeholder="Describe your match (optional)"></textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Latitude <span class="text-muted">(optional)</span></label>
+                <input type="number" step="any" class="form-control" name="latitude" placeholder="e.g. 28.6139" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Longitude <span class="text-muted">(optional)</span></label>
+                <input type="number" step="any" class="form-control" name="longitude" placeholder="e.g. 77.2090" />
+            </div>
+        </div>
+        <div class="d-flex justify-content-end mt-5">
+            <a href="/matches/" class="btn btn-outline-primary me-3">Cancel</a>
+            <button type="submit" class="btn btn-primary">Create Match</button>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+</script>
+{% endblock %} 

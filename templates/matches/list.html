@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Find Matches - GullySquad{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="mb-3">Find Matches</h1>
+            <p class="lead text-muted">Discover and join cricket matches in your area.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="/matches/create/" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>Host Match
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filters Section -->
+    <div class="card shadow-lg border-0 rounded-lg mb-4">
+        <div class="card-body">
+            <form id="filter-form" class="row g-3">
+                <div class="col-md-4">
+                    <label for="location" class="form-label">
+                        <i class="fas fa-map-marker-alt me-2"></i>Location
+                    </label>
+                    <input type="text" class="form-control" id="location" name="location" placeholder="Enter location">
+                </div>
+                <div class="col-md-3">
+                    <label for="date" class="form-label">
+                        <i class="fas fa-calendar me-2"></i>Date
+                    </label>
+                    <input type="date" class="form-control" id="date" name="date">
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">
+                        <i class="fas fa-info-circle me-2"></i>Status
+                    </label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">All Status</option>
+                        <option value="open">Open</option>
+                        <option value="full">Full</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Matches List -->
+    <div class="row" id="matches-list">
+        {% if matches %}
+            {% for match in matches %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="match-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="card-title mb-0">{{ match.title }}</h5>
+                                <span class="badge bg-primary">{{ match.status|upper }}</span>
+                            </div>
+                            <p class="card-text">
+                                <i class="fas fa-calendar me-2"></i>{{ match.date|date:'l, F j, Y' }}<br>
+                                <i class="fas fa-clock me-2"></i>{{ match.time }}<br>
+                                <i class="fas fa-map-marker-alt me-2"></i>{{ match.location }}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-users me-1"></i>{{ match.current_players }}/{{ match.max_players }} Players
+                                </span>
+                                <a href="/matches/{{ match.id }}/" class="btn btn-outline-primary btn-sm">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center">
+                <p class="lead text-muted">No matches found.</p>
+                <a href="/matches/create/" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Host a Match
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Load More Button -->
+    <div class="text-center mt-4" id="load-more-container" style="display: none;">
+        <button class="btn btn-outline-primary" id="load-more">
+            <i class="fas fa-sync-alt me-2"></i>Load More
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentPage = 1;
+    let isLoading = false;
+    let hasMore = true;
+    
+    // Function to fetch matches
+    function fetchMatches(page = 1, append = false) {
+        if (isLoading || !hasMore) return;
+        
+        isLoading = true;
+        const formData = new FormData(document.getElementById('filter-form'));
+        const params = new URLSearchParams(formData);
+        params.append('page', page);
+        
+        fetch(`/api/matches/?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                const matchesContainer = document.getElementById('matches-list');
+                if (!append) {
+                    matchesContainer.innerHTML = '';
+                }
+                
+                if (data.results.length === 0 && page === 1) {
+                    matchesContainer.innerHTML = `
+                        <div class="col-12 text-center">
+                            <p class="lead text-muted">No matches found.</p>
+                            <a href="/matches/create/" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Host a Match
+                            </a>
+                        </div>
+                    `;
+                    document.getElementById('load-more-container').style.display = 'none';
+                    return;
+                }
+                
+                data.results.forEach(match => {
+                    const matchDate = new Date(match.date);
+                    const formattedDate = matchDate.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    
+                    const statusClass = {
+                        'open': 'bg-success',
+                        'full': 'bg-warning',
+                        'in_progress': 'bg-info',
+                        'completed': 'bg-secondary'
+                    }[match.status] || 'bg-primary';
+                    
+                    matchesContainer.innerHTML += `
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="match-card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <h5 class="card-title mb-0">${match.title}</h5>
+                                        <span class="badge ${statusClass}">
+                                            ${match.status.replace('_', ' ').toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <p class="card-text">
+                                        <i class="fas fa-calendar me-2"></i>${formattedDate}<br>
+                                        <i class="fas fa-clock me-2"></i>${match.time}<br>
+                                        <i class="fas fa-map-marker-alt me-2"></i>${match.location}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-users me-1"></i>${match.current_players}/${match.max_players} Players
+                                        </span>
+                                        <a href="/matches/${match.id}/" class="btn btn-outline-primary btn-sm">
+                                            View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                hasMore = data.next !== null;
+                document.getElementById('load-more-container').style.display = hasMore ? 'block' : 'none';
+                currentPage = page;
+                isLoading = false;
+            })
+            .catch(error => {
+                console.error('Error fetching matches:', error);
+                document.getElementById('matches-list').innerHTML = `
+                    <div class="col-12 text-center">
+                        <p class="text-danger">Error loading matches. Please try again later.</p>
+                    </div>
+                `;
+                document.getElementById('load-more-container').style.display = 'none';
+                isLoading = false;
+            });
+    }
+    
+    // Initial load
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchMatches();
+        
+        // Filter form submission
+        document.getElementById('filter-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            currentPage = 1;
+            hasMore = true;
+            fetchMatches();
+        });
+        
+        // Load more button click
+        document.getElementById('load-more').addEventListener('click', function() {
+            fetchMatches(currentPage + 1, true);
+        });
+    });
+</script>
+{% endblock %} 
