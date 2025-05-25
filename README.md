@@ -1,90 +1,72 @@
-# 🏏 GullySquad
+# GullySquad 🏏
 
-GullySquad is a community-driven web platform that connects cricket enthusiasts who are looking to host or join casual cricket matches. Whether you're short of players or just want to jump into a nearby game, GullySquad helps you get on the field with the perfect squad.
+**GullySquad** is a location-based web platform that enables cricket enthusiasts to host or join informal local matches. It bridges the gap between passionate players and the frequent challenge of being short on teammates, making casual cricket more accessible and organized.
 
-## 🎯 Features
+---
 
-- **User Account Management**
-  - Sign up/Login
-  - Player profiles with roles (batsman, bowler, all-rounder)
+## 🚀 Features
 
-- **Match Management**
-  - Host matches with date, time, location
-  - Join nearby matches
-  - Auto-team split or manual team building
+- 🔐 User authentication with player roles (batsman, bowler, all-rounder)
+- 📍 Host or discover nearby cricket matches
+- 👥 Form or join squads with friends
+- 📅 Match creation with date, time, and player count
+- 💬 Match-specific chat for coordination
+- 📲 Availability status and match notifications
+- 📊 Basic profile with player history
 
-- **Squad System**
-  - Create permanent teams
-  - Invite friends to matches
+---
 
-- **Communication**
-  - In-app chat for match coordination
-  - Availability status
-  - Match notifications
+## 🎯 Purpose
 
-## 🛠 Tech Stack
+Cricket is one of the most loved sports, especially in India. However, casual street (gully) matches are often delayed or canceled due to a shortage of players. GullySquad aims to solve this by offering a dedicated platform to form, organize, and join local cricket games effortlessly.
 
-- **Frontend**: React.js with TypeScript
-- **Backend**: Django REST Framework
-- **Database**: PostgreSQL
-- **Authentication**: JWT
-- **Real-time Features**: Socket.IO
-- **Maps Integration**: Google Maps API
+---
 
-## 🚀 Getting Started
+## 🧑‍💻 Tech Stack
 
-### Prerequisites
+| Layer       | Technology        |
+|-------------|-------------------|
+| Frontend    | HTML, CSS, JavaScript |
+| Backend     | Django (Python)   |
+| Database    | PostgreSQL        |
+| Deployment  | Render / Firebase / GitHub Pages |
 
-- Node.js (v16 or higher)
-- Python (v3.8 or higher)
-- PostgreSQL
-- npm or yarn
+---
 
-### Frontend Setup
+## 📌 Future Enhancements
 
-```bash
-cd frontend
-npm install
-npm start
-```
+- ✅ Live scoring and match tracking  
+- ✅ Turf booking integration  
+- ✅ Google Maps support for location selection  
+- ✅ Mobile app (React Native or Flutter)  
+- ✅ Player statistics, leaderboards, and match analytics  
 
-### Backend Setup
+---
 
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
-```
+## 🧠 Target Users
 
-## 📁 Project Structure
+- University/college students  
+- Weekend cricket groups  
+- Turf players and casual enthusiasts  
+- Local sports clubs  
 
-```
-gullysquad/
-├── frontend/           # React frontend application
-├── backend/           # Django backend application
-├── docs/             # Documentation
-└── README.md         # Project documentation
-```
+---
 
-## 🤝 Contributing
+## 📂 Project Status
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+**In Development** – Core functionalities under construction with active plans for UI enhancements and feature additions.
 
-## 📝 License
+---
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 👨‍💻 Developer
 
-## 👥 Team
+Built by **Rohan**  
+Inspired by real-life challenges faced during casual cricket matches.
 
-- Rohan - Project Lead & Developer
+---
 
-## 📞 Contact
+## 🤝 Contributions
 
-For any queries or support, please reach out to [Your Contact Information] 
+Pull requests are welcome. For major changes, please open an issue first to discuss what you’d like to change.
+
+---
